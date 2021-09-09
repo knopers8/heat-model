@@ -1,0 +1,19 @@
+[Unit]
+Description=BBMeteo sensor hub
+After=bluetooth.target influxd.service
+StartLimitIntervalSec=0
+
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+User=root
+ExecStartPre=
+ExecStart=/path/to/bbmagic_server dbname login password
+ExecStartPost=
+ExecStop=
+ExecReload=
+
+[Install]
+WantedBy=multi-user.target

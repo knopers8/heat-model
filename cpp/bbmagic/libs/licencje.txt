@@ -1,0 +1,21 @@
+
+
+    libbluetooth jest czêœci¹ BlueZ.
+    BlueZ jest oficjaln¹ implementacj¹ protoko³u Bluetooth do Linuksa.
+    Jest to otwartoŸród³owy projekt rozpowszechniany na licencji GNU General Public License (GPL).
+    wiêcej info: http://www.bluez.org/
+    Pe³en tekst licencji GNU GPL znajduje siê: http://gnu.org.pl/text/licencja-gnu.html
+
+    bbmagic_lib jest bibliotek¹ obs³uguj¹c¹ urz¹dzenia rodziny BBMagic.
+    wiêcej info: http://bbmagic.net/
+
+
+
+    libbluetooth is a part of BlueZ.
+    BlueZ is the official Linux Bluetooth protocol stack.
+    It is an Open Source project distributed under GNU General Public License (GPL)
+    more info: http://www.bluez.org/
+    Full GNU GPL license: http://gnu.org.pl/text/licencja-gnu.html
+
+    bbmagic_lib is a library for BBMagic devices.
+    more info: http://bbmagic.net/
