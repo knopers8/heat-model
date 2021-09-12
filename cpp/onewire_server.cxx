@@ -24,10 +24,6 @@ int main(int argc, char** argv)
   }
 
   constexpr auto sensorPath = "/sys/bus/w1/devices/28-00000d4a1c31/temperature";
-  if (!std::filesystem::exists(sensorPath)){
-    std::cerr << "The path to the sensor temperature readout does not exist, check if the sensor is connected and one wire is enabled" << std::endl;
-    return 3;
-  }
 
   size_t failedTimesInARow = 0;
   auto startTime = std::chrono::system_clock::now();
