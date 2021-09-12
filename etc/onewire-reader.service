@@ -1,0 +1,19 @@
+[Unit]
+Description=One wire sensor reader
+After=influxd.service
+StartLimitIntervalSec=0
+
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=10
+User=root
+ExecStartPre=
+ExecStart=/path/to/onewire_server dbname login password period
+ExecStartPost=
+ExecStop=
+ExecReload=
+
+[Install]
+WantedBy=multi-user.target

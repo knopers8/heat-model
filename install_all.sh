@@ -18,3 +18,11 @@ cp etc/bbmeteo.service /etc/systemd/system/bbmeteo.service
 systemctl daemon-reload
 systemctl enable bbmeteo
 systemctl start bbmeteo
+
+
+### make onewire_server a service
+
+cp etc/onewire-reader.service /etc/systemd/system/onewire-reader.service
+systemctl daemon-reload
+systemctl enable onewire-reader
+systemctl start onewire-reader
