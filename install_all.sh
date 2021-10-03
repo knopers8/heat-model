@@ -12,6 +12,10 @@
 ### install grafana
 
 
+### install python dependencies
+
+pip3 install pytz influxdb-python
+
 ### make bbmeteo_server a service
 
 cp etc/bbmeteo.service /etc/systemd/system/bbmeteo.service
