@@ -21,8 +21,8 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 2,
-  "iteration": 1632418848307,
+  "id": 5,
+  "iteration": 1632418726231,
   "links": [],
   "panels": [
     {
@@ -116,7 +116,8 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds",
+            "fixedColor": "text",
+            "mode": "fixed",
             "seriesBy": "last"
           },
           "custom": {
@@ -127,7 +128,7 @@
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
-            "gradientMode": "scheme",
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
@@ -156,44 +157,58 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "dark-blue",
-                "value": -50
-              },
-              {
-                "color": "light-blue",
-                "value": -5
-              },
-              {
-                "color": "super-light-blue",
-                "value": 5
-              },
-              {
-                "color": "super-light-green",
-                "value": 15
-              },
-              {
-                "color": "light-green",
-                "value": 20
-              },
-              {
-                "color": "super-light-yellow",
-                "value": 25
-              },
-              {
-                "color": "super-light-red",
-                "value": 35
-              },
-              {
-                "color": "red",
-                "value": 45
               }
             ]
           },
           "unit": "celsius"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Min"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mean"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 6,
@@ -206,7 +221,7 @@
       "options": {
         "legend": {
           "calcs": [],
-          "displayMode": "hidden",
+          "displayMode": "list",
           "placement": "bottom"
         },
         "tooltip": {
@@ -217,11 +232,11 @@
       "repeatDirection": "h",
       "targets": [
         {
-          "alias": "Temperature [°C]",
+          "alias": "Min",
           "groupBy": [
             {
               "params": [
-                "$__interval"
+                "24h"
               ],
               "type": "time"
             },
@@ -238,7 +253,7 @@
           "policy": "default",
           "query": "SELECT distinct(\"temperature\") FROM \"bbmeteo\" WHERE $timeFilter GROUP BY time($__interval) fill(null) tz('Europe/Paris')",
           "rawQuery": false,
-          "refId": "Temperature [°C]",
+          "refId": "MIN",
           "resultFormat": "time_series",
           "select": [
             [
@@ -250,7 +265,101 @@
               },
               {
                 "params": [],
-                "type": "distinct"
+                "type": "min"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "address",
+              "operator": "=~",
+              "value": "/^$BBMeteo_addr$/"
+            }
+          ],
+          "tz": "Europe/Paris"
+        },
+        {
+          "alias": "Mean",
+          "groupBy": [
+            {
+              "params": [
+                "24h"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "bbmeteo",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT distinct(\"temperature\") FROM \"bbmeteo\" WHERE $timeFilter GROUP BY time($__interval) fill(null) tz('Europe/Paris')",
+          "rawQuery": false,
+          "refId": "MEAN",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "temperature"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "address",
+              "operator": "=~",
+              "value": "/^$BBMeteo_addr$/"
+            }
+          ],
+          "tz": "Europe/Paris"
+        },
+        {
+          "alias": "Max",
+          "groupBy": [
+            {
+              "params": [
+                "24h"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "bbmeteo",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT distinct(\"temperature\") FROM \"bbmeteo\" WHERE $timeFilter GROUP BY time($__interval) fill(null) tz('Europe/Paris')",
+          "rawQuery": false,
+          "refId": "MAX",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "temperature"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
               }
             ]
           ],
@@ -296,7 +405,7 @@
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
-            "gradientMode": "scheme",
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
@@ -325,28 +434,43 @@
               {
                 "color": "dark-purple",
                 "value": null
-              },
-              {
-                "color": "semi-dark-purple",
-                "value": 150
-              },
-              {
-                "color": "light-purple",
-                "value": 230
-              },
-              {
-                "color": "super-light-purple",
-                "value": 240
-              },
-              {
-                "color": "#ffffff",
-                "value": 250
               }
             ]
           },
           "unit": "none"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mean"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "purple",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 6,
@@ -359,7 +483,7 @@
       "options": {
         "legend": {
           "calcs": [],
-          "displayMode": "hidden",
+          "displayMode": "list",
           "placement": "bottom"
         },
         "tooltip": {
@@ -370,11 +494,11 @@
       "repeatDirection": "h",
       "targets": [
         {
-          "alias": "Brightness",
+          "alias": "Min",
           "groupBy": [
             {
               "params": [
-                "$__interval"
+                "24h"
               ],
               "type": "time"
             },
@@ -402,7 +526,101 @@
               },
               {
                 "params": [],
-                "type": "distinct"
+                "type": "min"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "address",
+              "operator": "=~",
+              "value": "/^$BBMeteo_addr$/"
+            }
+          ],
+          "tz": "Europe/Paris"
+        },
+        {
+          "alias": "Mean",
+          "groupBy": [
+            {
+              "params": [
+                "24h"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "bbmeteo",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT distinct(\"temperature\") FROM \"bbmeteo\" WHERE $timeFilter GROUP BY time($__interval) fill(null) tz('Europe/Paris')",
+          "rawQuery": false,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "brightness"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "address",
+              "operator": "=~",
+              "value": "/^$BBMeteo_addr$/"
+            }
+          ],
+          "tz": "Europe/Paris"
+        },
+        {
+          "alias": "Max",
+          "groupBy": [
+            {
+              "params": [
+                "24h"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "bbmeteo",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT distinct(\"temperature\") FROM \"bbmeteo\" WHERE $timeFilter GROUP BY time($__interval) fill(null) tz('Europe/Paris')",
+          "rawQuery": false,
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "brightness"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
               }
             ]
           ],
@@ -448,7 +666,7 @@
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
-            "gradientMode": "scheme",
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
@@ -477,32 +695,58 @@
               {
                 "color": "light-blue",
                 "value": null
-              },
-              {
-                "color": "#ffffff",
-                "value": 0
-              },
-              {
-                "color": "super-light-blue",
-                "value": 25
-              },
-              {
-                "color": "light-blue",
-                "value": 50
-              },
-              {
-                "color": "semi-dark-blue",
-                "value": 75
-              },
-              {
-                "color": "dark-blue",
-                "value": 85
               }
             ]
           },
           "unit": "humidity"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Min"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "super-light-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Mean"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 6,
@@ -515,7 +759,7 @@
       "options": {
         "legend": {
           "calcs": [],
-          "displayMode": "hidden",
+          "displayMode": "list",
           "placement": "bottom"
         },
         "tooltip": {
@@ -526,11 +770,11 @@
       "repeatDirection": "h",
       "targets": [
         {
-          "alias": "Relative Humidity",
+          "alias": "Min",
           "groupBy": [
             {
               "params": [
-                "$__interval"
+                "24h"
               ],
               "type": "time"
             },
@@ -558,7 +802,101 @@
               },
               {
                 "params": [],
-                "type": "distinct"
+                "type": "min"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "address",
+              "operator": "=~",
+              "value": "/^$BBMeteo_addr$/"
+            }
+          ],
+          "tz": "Europe/Paris"
+        },
+        {
+          "alias": "Mean",
+          "groupBy": [
+            {
+              "params": [
+                "24h"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "bbmeteo",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT distinct(\"temperature\") FROM \"bbmeteo\" WHERE $timeFilter GROUP BY time($__interval) fill(null) tz('Europe/Paris')",
+          "rawQuery": false,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "humidity"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [
+            {
+              "key": "address",
+              "operator": "=~",
+              "value": "/^$BBMeteo_addr$/"
+            }
+          ],
+          "tz": "Europe/Paris"
+        },
+        {
+          "alias": "Max",
+          "groupBy": [
+            {
+              "params": [
+                "24h"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "bbmeteo",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT distinct(\"temperature\") FROM \"bbmeteo\" WHERE $timeFilter GROUP BY time($__interval) fill(null) tz('Europe/Paris')",
+          "rawQuery": false,
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "humidity"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
               }
             ]
           ],
@@ -586,7 +924,7 @@
       },
       "id": 57,
       "panels": [],
-      "title": "One wire",
+      "title": "Heater temperature",
       "type": "row"
     },
     {
@@ -605,7 +943,7 @@
             "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
-            "gradientMode": "scheme",
+            "gradientMode": "none",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
@@ -634,48 +972,43 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "dark-blue",
-                "value": -50
-              },
-              {
-                "color": "light-blue",
-                "value": -5
-              },
-              {
-                "color": "super-light-blue",
-                "value": 5
-              },
-              {
-                "color": "super-light-green",
-                "value": 15
-              },
-              {
-                "color": "light-green",
-                "value": 20
-              },
-              {
-                "color": "super-light-yellow",
-                "value": 25
-              },
-              {
-                "color": "super-light-red",
-                "value": 35
-              },
-              {
-                "color": "red",
-                "value": 45
-              },
-              {
-                "color": "dark-red",
-                "value": 65
               }
             ]
           },
           "unit": "celsius"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Min"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Max"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "light-yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 8,
@@ -698,11 +1031,11 @@
       "repeatDirection": "h",
       "targets": [
         {
-          "alias": "Temperature [°C]",
+          "alias": "Min",
           "groupBy": [
             {
               "params": [
-                "$__interval"
+                "24h"
               ],
               "type": "time"
             },
@@ -730,7 +1063,89 @@
               },
               {
                 "params": [],
-                "type": "distinct"
+                "type": "min"
+              }
+            ]
+          ],
+          "tags": [],
+          "tz": "Europe/Paris"
+        },
+        {
+          "alias": "Mean",
+          "groupBy": [
+            {
+              "params": [
+                "24h"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "onewire",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT distinct(\"temperature\") FROM \"bbmeteo\" WHERE $timeFilter GROUP BY time($__interval) fill(null) tz('Europe/Paris')",
+          "rawQuery": false,
+          "refId": "A",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "temperature"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "mean"
+              }
+            ]
+          ],
+          "tags": [],
+          "tz": "Europe/Paris"
+        },
+        {
+          "alias": "Max",
+          "groupBy": [
+            {
+              "params": [
+                "24h"
+              ],
+              "type": "time"
+            },
+            {
+              "params": [
+                "null"
+              ],
+              "type": "fill"
+            }
+          ],
+          "hide": false,
+          "measurement": "onewire",
+          "orderByTime": "ASC",
+          "policy": "default",
+          "query": "SELECT distinct(\"temperature\") FROM \"bbmeteo\" WHERE $timeFilter GROUP BY time($__interval) fill(null) tz('Europe/Paris')",
+          "rawQuery": false,
+          "refId": "B",
+          "resultFormat": "time_series",
+          "select": [
+            [
+              {
+                "params": [
+                  "temperature"
+                ],
+                "type": "field"
+              },
+              {
+                "params": [],
+                "type": "max"
               }
             ]
           ],
@@ -742,7 +1157,7 @@
       "type": "timeseries"
     }
   ],
-  "refresh": false,
+  "refresh": "1d",
   "schemaVersion": 30,
   "style": "dark",
   "tags": [],
@@ -785,12 +1200,12 @@
     ]
   },
   "time": {
-    "from": "now-24h",
+    "from": "now-28d",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "Measurements",
-  "uid": "yl-8pcigz",
-  "version": 36
+  "title": "Long-term",
+  "uid": "W2hZacggk",
+  "version": 7
 }
