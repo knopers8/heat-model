@@ -14,7 +14,12 @@
 
 ### install python dependencies
 
-pip3 install pytz influxdb-python
+pip3 install pytz influxdb
+
+### install linky reader
+
+apt install npm
+npm i -g linky
 
 ### make bbmeteo_server a service
 
