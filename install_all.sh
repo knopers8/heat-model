@@ -14,7 +14,7 @@
 
 ### install python dependencies
 
-pip3 install pytz influxdb
+pip3 install pytz influxdb pandas numpy scipy
 
 ### install linky reader
 
