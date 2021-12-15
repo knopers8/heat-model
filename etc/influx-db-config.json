@@ -1,0 +1,9 @@
+{
+  "influx-db-config": {
+    "user": "",
+    "password": "",
+    "dbname": "",
+    "host": "",
+    "port": ""
+  }
+}
