@@ -10,39 +10,108 @@ import pytz
 import sys
 import json
 
+
 def defaultParameters():
-  ### all input parameters
+  params = np.array([
+    0.15,   # alfa12, alfa21
+    6250,   # alfa13, alfa31
+    8325,   # alfa14, alfa41
+    525,    # alfa15, alfa51
+    262,    # alfa16, alfa61
+    1250,   # alfa23, alfa32
+    2000,   # alfa24, alfa42
+    188,    # alfa26, alfa62
+    4,      # alfa34, alfa43
+    6.7,    # alfa45, alfa54
+    7.95,   # alfa46, alfa64
+    102.5,  # kappa11
+    0.025,  # kappa12
+    0.0125, # kappa13
+    24.34,  # kappa21
+    0.0125, # kappa23
+    272,    # kappa41
+    525,    # kappa52
+    525,    # kappa63
+    0.208,  # lambd31
+    0.208,  # lambd32
+    0.708,  # lambd41
+    0.696,  # lambd42
+    0.041,  # lambd53
+    0.041,  # lambd64
+    133.23, # m1
+    26.22,  # m2
+    3000,   # m3
+    37000,  # m4
+    5000,   # m5
+    5000    # m6
+  ])
+  return params
+
+def matricesFromParameters(params):
+  alfa12 = alfa21 = params[0]
+  alfa13 = alfa31 = params[1]
+  alfa14 = alfa41 = params[2]
+  alfa15 = alfa51 = params[3]
+  alfa16 = alfa61 = params[4]
+  alfa23 = alfa32 = params[5]
+  alfa24 = alfa42 = params[6]
+  alfa26 = alfa62 = params[7]
+  alfa34 = alfa43 = params[8]
+  alfa45 = alfa54 = params[9]
+  alfa46 = alfa64 = params[10]
+  kappa11 = params[11]
+  kappa12 = params[12]
+  kappa13 = params[13]
+  kappa21 = params[14]
+  kappa23 = params[15]
+  kappa41 = params[16]
+  kappa52 = params[17]
+  kappa63 = params[18]
+  lambd31 = params[19]
+  lambd32 = params[20]
+  lambd41 = params[21]
+  lambd42 = params[22]
+  lambd53 = params[23]
+  lambd64 = params[24]
+  m1 = params[25]
+  m2 = params[26]
+  m3 = params[27]
+  m4 = params[28]
+  m5 = params[29]
+  m6 = params[30]
 
   alfa = np.array([
-    [0   , 0.15, 6250, 8325, 525,  262],
-    [0.15,    0, 1250, 2000,   0,  188],
-    [6250, 1250,    0,    4,   0,    0],
-    [8325, 2000,    4,    0, 6.7, 7.95],
-    [525 ,    0,    0,  6.7,   0,    0],
-    [262 ,  188,    0, 7.95,   0,    0]
+    [0     , alfa12, alfa13, alfa14, alfa15,  alfa16],
+    [alfa21,      0, alfa23, alfa24,      0,  alfa26],
+    [alfa31, alfa32,      0, alfa34,      0,       0],
+    [alfa14, alfa42, alfa43,      0, alfa45,  alfa46],
+    [alfa15,      0,      0, alfa54,      0,       0],
+    [alfa16, alfa62,      0, alfa64,      0,       0]
     ])
 
   kappa = np.array([
-    [102.5, 0.025, 0.0125,    0],
-    [24.34,     0, 0.0125,    0],
-    [    0,     0,      0,    1],
-    [  272,     0,      0,    0],
-    [    0,   525,      0,    0],
-    [    0,     0,    525,    0]
+    [kappa11, kappa12, kappa13,    0],
+    [kappa21,       0, kappa23,    0],
+    [      0,       0,       0,    1],
+    [kappa41,       0,       0,    0],
+    [      0, kappa52,       0,    0],
+    [      0,       0, kappa63,    0]
     ])
 
   lambd = np.array([
-    [     0,     0,     0,     0],
-    [     0,     0,     0,     0],
-    [ 0.208, 0.208,     0,     0],
-    [ 0.708, 0.696,     0,     0],
-    [     0,     0, 0.041,     0],
-    [     0,     0,     0, 0.041]
+    [       0,       0,       0,       0],
+    [       0,       0,       0,       0],
+    [ lambd31, lambd32,       0,       0],
+    [ lambd41, lambd42,       0,       0],
+    [       0,       0, lambd53,       0],
+    [       0,       0,       0, lambd64]
     ])
 
   # masses [kg]
-  m = np.array([133.23, 26.22, 3000, 37000, 5000, 5000])
+  m = np.array([m1, m2, m3, m4, m5, m6])
   # heat capacity [ J / (kg K) ]
+  # we do not parametrize those, because they have exactly the same influence on A, K, L
+  # so we avoid increasing degrees of freedom
   c = np.array([1000, 1000, 1500, 880, 880, 880])
 
   return alfa, kappa, lambd, m, c
@@ -171,8 +240,8 @@ def computeAvgDist(reference, results):
   print("todo")
 
 def runModel(config, t_begin, t_end, t_nsamples):
-  alfa, kappa, lambd, m, c = defaultParameters()
-  x_0 = defaultInitialConditions()  
+  alfa, kappa, lambd, m, c = matricesFromParameters(defaultParameters())
+  x_0 = defaultInitialConditions()
   u, b = retrieveExternalConditions(config['influx-db-config'], t_begin, t_end)
   
   A, K, L = parametersToStateMatrices(alfa, kappa, lambd, m, c)
