@@ -243,11 +243,13 @@ def runModel(config, t_begin, t_end, t_nsamples):
   alfa, kappa, lambd, m, c = matricesFromParameters(defaultParameters())
   x_0 = defaultInitialConditions()
   u, b = retrieveExternalConditions(config['influx-db-config'], t_begin, t_end)
+  x1, x2 = retrieveKnownStates(config['influx-db-config'], t_begin, t_end)
   
   A, K, L = parametersToStateMatrices(alfa, kappa, lambd, m, c)
   ode_model = make_ode_model(A, K, L, u, b)
   
   t_space = np.linspace(t_begin, t_end, t_nsamples)
+  dt_space = [ pytz.utc.localize(datetime.fromtimestamp(t)) for t in t_space ]
 
   x_00 = x_0.T[0]
 
@@ -262,13 +264,14 @@ def runModel(config, t_begin, t_end, t_nsamples):
   x6_num_sol = X_num_sol[5].T
 
   plt.figure()
-  plt.plot(t_space, x1_num_sol, '-', linewidth=1, label='x1')
-  plt.plot(t_space, x2_num_sol, '-', linewidth=1, label='x2')
-  plt.plot(t_space, x3_num_sol, '-', linewidth=1, label='x3')
-  plt.plot(t_space, x4_num_sol, '-', linewidth=1, label='x4')
-  plt.plot(t_space, x5_num_sol, '-', linewidth=1, label='x5')
-  plt.plot(t_space, x6_num_sol, '-', linewidth=1, label='x6')
-
+  plt.plot(dt_space, x1_num_sol, '-', linewidth=1, label='x1')
+  plt.plot(dt_space, x2_num_sol, '-', linewidth=1, label='x2')
+  plt.plot(dt_space, x3_num_sol, '-', linewidth=1, label='x3')
+  plt.plot(dt_space, x4_num_sol, '-', linewidth=1, label='x4')
+  plt.plot(dt_space, x5_num_sol, '-', linewidth=1, label='x5')
+  plt.plot(dt_space, x6_num_sol, '-', linewidth=1, label='x6')
+  plt.plot(x1, '-', linewidth=1, label='x1_real')
+  plt.plot(x2, '-', linewidth=1, label='x2_real')
 
   plt.xlabel('t')
   plt.legend()
