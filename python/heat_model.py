@@ -245,9 +245,8 @@ def storeModelRun():
   #todo: store a model run
   print("todo")
 
-def computeAvgDist(reference, results):
-  # todo: compute some coeff measuring distance
-  print("todo")
+def computeError(reference, results):
+  return sum([pow(reference.asof(idx) - results[idx], 2) for idx in results.index if pd.isna(reference.asof(idx)) == False])
 
 def runModel(config, t_begin, t_end, t_nsamples):
   alfa, kappa, lambd, m, c = matricesFromParameters(defaultParameters())
@@ -266,25 +265,28 @@ def runModel(config, t_begin, t_end, t_nsamples):
   # Radau shows less fluctuation when system is stabilized
   num_sol = solve_ivp(ode_model, [t_begin, t_end], x_00, method='Radau', dense_output=True)
   X_num_sol = num_sol.sol(t_space)
-  x1_num_sol = X_num_sol[0].T
-  x2_num_sol = X_num_sol[1].T
-  x3_num_sol = X_num_sol[2].T
-  x4_num_sol = X_num_sol[3].T
-  x5_num_sol = X_num_sol[4].T
-  x6_num_sol = X_num_sol[5].T
+  x1_num_sol = pd.Series(X_num_sol[0].T, index=dt_space)
+  x2_num_sol = pd.Series(X_num_sol[1].T, index=dt_space)
+  x3_num_sol = pd.Series(X_num_sol[2].T, index=dt_space)
+  x4_num_sol = pd.Series(X_num_sol[3].T, index=dt_space)
+  x5_num_sol = pd.Series(X_num_sol[4].T, index=dt_space)
+  x6_num_sol = pd.Series(X_num_sol[5].T, index=dt_space)
 
   plt.figure()
-  plt.plot(dt_space, x1_num_sol, '-', linewidth=1, label='x1')
-  plt.plot(dt_space, x2_num_sol, '-', linewidth=1, label='x2')
-  plt.plot(dt_space, x3_num_sol, '-', linewidth=1, label='x3')
-  plt.plot(dt_space, x4_num_sol, '-', linewidth=1, label='x4')
-  plt.plot(dt_space, x5_num_sol, '-', linewidth=1, label='x5')
-  plt.plot(dt_space, x6_num_sol, '-', linewidth=1, label='x6')
+  plt.plot(x1_num_sol, '-', linewidth=1, label='x1')
+  plt.plot(x2_num_sol, '-', linewidth=1, label='x2')
+  plt.plot(x3_num_sol, '-', linewidth=1, label='x3')
+  plt.plot(x4_num_sol, '-', linewidth=1, label='x4')
+  plt.plot(x5_num_sol, '-', linewidth=1, label='x5')
+  plt.plot(x6_num_sol, '-', linewidth=1, label='x6')
   plt.plot(x1, '-', linewidth=1, label='x1_real')
   plt.plot(x2, '-', linewidth=1, label='x2_real')
 
   plt.xlabel('t')
   plt.legend()
+  
+  print('x1 error: ' + str(computeError(x1, x1_num_sol)))
+  print('x2 error: ' + str(computeError(x2, x2_num_sol)))
   plt.show()
 
 
