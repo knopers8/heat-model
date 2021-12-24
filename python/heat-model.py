@@ -47,6 +47,16 @@ def defaultParameters():
   ])
   return params
 
+def validateParameters(params):
+
+  # all parameters should be not less than 0
+  if (any(p < 0 for p in params)):
+    return False
+  
+  # todo: more will follow
+
+  return True
+
 def matricesFromParameters(params):
   alfa12 = alfa21 = params[0]
   alfa13 = alfa31 = params[1]
