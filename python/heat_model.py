@@ -2,6 +2,7 @@
 from influxdb import InfluxDBClient
 
 from scipy.integrate import solve_ivp
+from scipy.optimize import minimize
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -248,6 +249,34 @@ def storeModelRun():
 def computeError(reference, results):
   return sum([pow(reference.asof(idx) - results[idx], 2) for idx in results.index if pd.isna(reference.asof(idx)) == False])
 
+def getModelOptimizationFunction(config, t_begin, t_end, t_nsamples):
+  
+  u, b = retrieveExternalConditions(config['influx-db-config'], t_begin, t_end)
+  x1, x2 = retrieveKnownStates(config['influx-db-config'], t_begin, t_end)
+  
+  t_space = np.linspace(t_begin, t_end, t_nsamples)
+  dt_space = [ pytz.utc.localize(datetime.fromtimestamp(t)) for t in t_space ]
+  
+  def modelOptimizationFunction(params):
+    print('params: ' + str(params))
+    alfa, kappa, lambd, m, c = matricesFromParameters(params[0:31])
+    x_0 = params[31:]
+    x_00 = x_0.T # [0]
+    print('x_00 ' + str(x_00))
+    A, K, L = parametersToStateMatrices(alfa, kappa, lambd, m, c)
+    
+    ode_model = make_ode_model(A, K, L, u, b)
+    num_sol = solve_ivp(ode_model, [t_begin, t_end], x_00, method='Radau', dense_output=True)
+    X_num_sol = num_sol.sol(t_space)
+    x1_num_sol = pd.Series(X_num_sol[0].T, index=dt_space)
+    x2_num_sol = pd.Series(X_num_sol[1].T, index=dt_space)
+    
+    error = computeError(x1, x1_num_sol) + computeError(x2, x2_num_sol)
+    print('error: ' + str(error))
+    return error
+    
+  return modelOptimizationFunction
+
 def runModel(config, t_begin, t_end, t_nsamples):
   alfa, kappa, lambd, m, c = matricesFromParameters(defaultParameters())
   x_0 = defaultInitialConditions()
@@ -289,7 +318,13 @@ def runModel(config, t_begin, t_end, t_nsamples):
   print('x2 error: ' + str(computeError(x2, x2_num_sol)))
   plt.show()
 
-
+def optimizeModel(config, t_begin, t_end, t_nsamples):
+  params_0 = defaultParameters()
+  params_0 = np.append(params_0, defaultInitialConditions())
+  modelOptFun = getModelOptimizationFunction(config, t_begin, t_end, t_nsamples)
+  res = minimize(modelOptFun, params_0, method='nelder-mead', options={'xatol': 1e-2, 'disp': True, 'maxiter' : 1000})
+  print(res.x)
+  
 
 def main():
   #todo: run default stuff
@@ -297,7 +332,8 @@ def main():
   with open(config_path, "r") as config_json:
     config = json.load(config_json)
   
-  runModel(config, 1639349078 - 2 * 24 * 60 * 60, 1639349078, 10000)
+  # runModel(config, 1640341752 - 14 * 24 * 60 * 60, 1640341752, 10000)
+  optimizeModel(config, 1640341752 - 14 * 24 * 60 * 60, 1640341752, 10000)
 
 if __name__ == "__main__":
   exit(main())
