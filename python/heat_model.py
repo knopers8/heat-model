@@ -10,7 +10,7 @@ from datetime import datetime
 import pytz
 import sys
 import json
-
+import cProfile
 
 def defaultParameters():
   params = np.array([
@@ -46,6 +46,15 @@ def defaultParameters():
     5000,   # m5
     5000    # m6
   ])
+  
+  # params = np.array([2.42812581e-01,  9.84127387e+03,  5.89097487e+03,  1.52346061e+02,
+  # 1.94061987e+02,  2.68282253e+02,  2.25041825e+02,  5.14563941e+02,
+  # 3.94310265e+00,  4.10445269e+00,  1.14545698e+01,  1.74527036e+02,
+  # 1.88303822e-02,  1.22621778e-02,  3.77766050e+01,  1.20549133e-02,
+  # 5.97424661e+02, -3.74242412e+01,  7.55038580e+01,  4.10639069e-01,
+  # 1.49637582e-01,  1.97919206e-01,  9.85689071e-01,  3.07577251e-02,
+  # 3.76970877e-02,  9.19450196e+01,  3.16828111e+01,  3.99528762e+03,
+  # 5.25225791e+04,  5.00342766e+03,  5.17384576e+03])
   return params
 
 def validateParameters(params):
@@ -121,7 +130,7 @@ def matricesFromParameters(params):
   # masses [kg]
   m = np.array([m1, m2, m3, m4, m5, m6])
   # heat capacity [ J / (kg K) ]
-  # we do not parametrize those, because they have exactly the same influence on A, K, L
+  # we do not parametrize those, because they have exactly the same influence on A, K, L as m
   # so we avoid increasing degrees of freedom
   c = np.array([1000, 1000, 1500, 880, 880, 880])
 
@@ -129,13 +138,15 @@ def matricesFromParameters(params):
 
 def defaultInitialConditions():
   x_0 = np.array([
-    [20],
+    [19.5],
     [18],
-    [19],
+    [18],
     [18],
     [10],
     [8]
     ])
+  
+  # x_0 = np.array([[18.44693111], [17.63445569], [18.27838006], [18.23274769], [6.88350227], [6.54061254]])
   return x_0
 
 def defaultCoveredSensorLuxCalibration():
@@ -161,24 +172,21 @@ def parametersToStateMatrices(alfa, kappa, lambd, m, c):
   for i in range(len(alfa)):
     K[i] = K[i] / m[i] / c[i]
     L[i] = L[i] / m[i] / c[i]
-    
-  print(A)
-  print(K)
-  print(L)
+  
   return A, K, L
 
 
-def make_ode_model(A, K, L, u, b):
+def make_ode_model(A, K, L, ub):
+  last_dt = ub.index[-1]
   def model(t, x):
-    dt = pytz.utc.localize(datetime.fromtimestamp(t)).isoformat()
-    current_u = np.array([ [u[0].asof(dt)], [u[1].asof(dt)], [u[2].asof(dt)], [u[3].asof(dt)]])
-    current_b = np.array([ [b[0].asof(dt)], [b[1].asof(dt)], [b[2].asof(dt)], [b[3].asof(dt)]])
-    # print('current_u')
-    # print(current_u)
-    # print('current_b')
-    # print(current_b)
+    dt = pytz.utc.localize(datetime.fromtimestamp(t).replace(second=0, microsecond=0))
+    # print(dt)
+    if dt > last_dt:
+      dt = last_dt
+    current_ub = ub.loc[dt]
+    current_u = np.array([ current_ub[0:4] ]).T
+    current_b = np.array([ current_ub[4:8] ]).T
     res = np.dot(A, x.T) + np.dot(K, current_u).T[0] + np.dot(L, current_b).T[0]
-    # print(res)
     return res
 
   return model
@@ -213,30 +221,42 @@ def retrieveSeriesInfluxDB(db_config, table, field, t_begin_s, t_end_s, address)
   print('Retrieved field ' + field + ' from table ' + table + ', got ' + str(len(values)) + ' entries')
   return pd.Series(values, index=indices)
 
+def aggregateSeries(*series, freq):
+  # i don't know why, but I have to use mean() before padding any values fwd and bckwd.
+  df = pd.concat(series, axis=1).resample(freq, kind='timestamp').mean().fillna(method='ffill').fillna(method='bfill')
+  return df
 
 def retrieveExternalConditions(db_config, t_start, t_end):
   u1 = retrieveSeriesInfluxDB(db_config, 'onewire', 'temperature', t_start, t_end, '')
   u2 = retrieveSeriesInfluxDB(db_config, 'bbmeteo', 'temperature', t_start, t_end, 'd8439cc8c1cd')
   u3 = retrieveSeriesInfluxDB(db_config, 'bbmeteo', 'temperature', t_start, t_end, 'f62ca793005e')
   u4 = retrieveSeriesInfluxDB(db_config, 'power_consumption', 'power', t_start, t_end, '')
+  u1.name = 'u1'
+  u2.name = 'u2'
+  u3.name = 'u3'
+  u4.name = 'u4'
   
   b1 = retrieveSeriesInfluxDB(db_config, 'bbmeteo', 'brightness', t_start, t_end, 'cea3118ce7ab').map(defaultUncoveredSensorLuxCalibration())
   b2 = retrieveSeriesInfluxDB(db_config, 'bbmeteo', 'brightness', t_start, t_end, 'f261555d69d9').map(defaultUncoveredSensorLuxCalibration())
   b3 = retrieveSeriesInfluxDB(db_config, 'bbmeteo', 'brightness', t_start, t_end, 'd8439cc8c1cd').map(defaultCoveredSensorLuxCalibration())
   b4 = retrieveSeriesInfluxDB(db_config, 'bbmeteo', 'brightness', t_start, t_end, 'f62ca793005e').map(defaultUncoveredSensorLuxCalibration())
+  b1.name = 'b1'
+  b2.name = 'b2'
+  b3.name = 'b3'
+  b4.name = 'b4'
   
-  # i am sure it can be done smarter
-  # (i don't know yet what to do about different sampling rates and missing points. just resample to one time domain?)
-  u = np.array([ u1, u2, u3, u4 ], dtype=object)
-  b = np.array([ b1, b2, b3, b4 ], dtype=object)
-  return u, b
+  df = aggregateSeries(u1, u2, u3, u4, b1, b2, b3, b4, freq='60S')
+
+  return df
 
 
 def retrieveKnownStates(db_config, t_start, t_end):
   x1 = retrieveSeriesInfluxDB(db_config, 'bbmeteo', 'temperature', t_start, t_end, 'cea3118ce7ab')
   x2 = retrieveSeriesInfluxDB(db_config, 'bbmeteo', 'temperature', t_start, t_end, 'f261555d69d9')
-  return x1, x2
-
+  
+  x1.name = 'x1'
+  x2.name = 'x2'
+  return aggregateSeries(x1, x2, freq='60S')
 
 def storeInfluxDB():
   # todo: general method to store in influxdb
@@ -247,15 +267,18 @@ def storeModelRun():
   print("todo")
 
 def computeError(reference, results):
-  return sum([pow(reference.asof(idx) - results[idx], 2) for idx in results.index if pd.isna(reference.asof(idx)) == False])
+  return sum(pow(reference - results, 2))
 
-def getModelOptimizationFunction(config, t_begin, t_end, t_nsamples):
+def getModelOptimizationFunction(config, t_begin, t_end):
   
-  u, b = retrieveExternalConditions(config['influx-db-config'], t_begin, t_end)
-  x1, x2 = retrieveKnownStates(config['influx-db-config'], t_begin, t_end)
+  ub = retrieveExternalConditions(config['influx-db-config'], t_begin, t_end)
+  x12 = retrieveKnownStates(config['influx-db-config'], t_begin, t_end)
   
-  t_space = np.linspace(t_begin, t_end, t_nsamples)
-  dt_space = [ pytz.utc.localize(datetime.fromtimestamp(t)) for t in t_space ]
+  # TODO support any step
+  t_begin = t_begin - (t_begin % 60)
+  t_end = t_end - (t_end % 60)
+  t_space = np.arange(t_begin, t_end, 60) # TODO parametrize step
+  dt_space = pd.DatetimeIndex([ datetime.fromtimestamp(t, tz=pytz.UTC) for t in t_space ], freq='60S')
   
   def modelOptimizationFunction(params):
     print('params: ' + str(params))
@@ -265,35 +288,39 @@ def getModelOptimizationFunction(config, t_begin, t_end, t_nsamples):
     print('x_00 ' + str(x_00))
     A, K, L = parametersToStateMatrices(alfa, kappa, lambd, m, c)
     
-    ode_model = make_ode_model(A, K, L, u, b)
-    num_sol = solve_ivp(ode_model, [t_begin, t_end], x_00, method='Radau', dense_output=True)
-    X_num_sol = num_sol.sol(t_space)
+    ode_model = make_ode_model(A, K, L, ub)
+    num_sol = solve_ivp(ode_model, [t_begin, t_end], x_00, method='Radau', t_eval=t_space)
+    X_num_sol = num_sol.y
     x1_num_sol = pd.Series(X_num_sol[0].T, index=dt_space)
     x2_num_sol = pd.Series(X_num_sol[1].T, index=dt_space)
-    
-    error = computeError(x1, x1_num_sol) + computeError(x2, x2_num_sol)
+       
+    error = computeError(x12['x1'], x1_num_sol) + computeError(x12['x2'], x2_num_sol)
     print('error: ' + str(error))
     return error
     
   return modelOptimizationFunction
 
-def runModel(config, t_begin, t_end, t_nsamples):
+def runModel(config, t_begin, t_end):
   alfa, kappa, lambd, m, c = matricesFromParameters(defaultParameters())
   x_0 = defaultInitialConditions()
-  u, b = retrieveExternalConditions(config['influx-db-config'], t_begin, t_end)
-  x1, x2 = retrieveKnownStates(config['influx-db-config'], t_begin, t_end)
+  ub = retrieveExternalConditions(config['influx-db-config'], t_begin, t_end)
+  x12 = retrieveKnownStates(config['influx-db-config'], t_begin, t_end)
   
   A, K, L = parametersToStateMatrices(alfa, kappa, lambd, m, c)
-  ode_model = make_ode_model(A, K, L, u, b)
+  ode_model = make_ode_model(A, K, L, ub)
   
-  t_space = np.linspace(t_begin, t_end, t_nsamples)
-  dt_space = [ pytz.utc.localize(datetime.fromtimestamp(t)) for t in t_space ]
-
+  # TODO support any step
+  t_begin = t_begin - (t_begin % 60)
+  t_end = t_end - (t_end % 60)
+  t_space = np.arange(t_begin, t_end, 60) # TODO parametrize step
+  dt_space = pd.DatetimeIndex([ datetime.fromtimestamp(t, tz=pytz.UTC) for t in t_space ], freq='60S')
   x_00 = x_0.T[0]
-
-  # Radau shows less fluctuation when system is stabilized
-  num_sol = solve_ivp(ode_model, [t_begin, t_end], x_00, method='Radau', dense_output=True)
-  X_num_sol = num_sol.sol(t_space)
+  
+  # Radau shows less fluctuations when system is stabilized
+  print('simulation started')
+  num_sol = solve_ivp(ode_model, [t_begin, t_end], x_00, method='Radau', t_eval=t_space)
+  print('simulation finished')
+  X_num_sol = num_sol.y
   x1_num_sol = pd.Series(X_num_sol[0].T, index=dt_space)
   x2_num_sol = pd.Series(X_num_sol[1].T, index=dt_space)
   x3_num_sol = pd.Series(X_num_sol[2].T, index=dt_space)
@@ -308,32 +335,33 @@ def runModel(config, t_begin, t_end, t_nsamples):
   plt.plot(x4_num_sol, '-', linewidth=1, label='x4')
   plt.plot(x5_num_sol, '-', linewidth=1, label='x5')
   plt.plot(x6_num_sol, '-', linewidth=1, label='x6')
-  plt.plot(x1, '-', linewidth=1, label='x1_real')
-  plt.plot(x2, '-', linewidth=1, label='x2_real')
+  plt.plot(x12['x1'], '-', linewidth=1, label='x1_real')
+  plt.plot(x12['x2'], '-', linewidth=1, label='x2_real')
 
   plt.xlabel('t')
   plt.legend()
   
-  print('x1 error: ' + str(computeError(x1, x1_num_sol)))
-  print('x2 error: ' + str(computeError(x2, x2_num_sol)))
+  print('x1 error: ' + str(computeError(x12['x1'], x1_num_sol)))
+  print('x2 error: ' + str(computeError(x12['x2'], x2_num_sol)))
   plt.show()
 
-def optimizeModel(config, t_begin, t_end, t_nsamples):
+def optimizeModel(config, t_begin, t_end):
   params_0 = defaultParameters()
   params_0 = np.append(params_0, defaultInitialConditions())
-  modelOptFun = getModelOptimizationFunction(config, t_begin, t_end, t_nsamples)
-  res = minimize(modelOptFun, params_0, method='nelder-mead', options={'xatol': 1e-2, 'disp': True, 'maxiter' : 1000})
+  modelOptFun = getModelOptimizationFunction(config, t_begin, t_end)
+  res = minimize(modelOptFun, params_0, method='nelder-mead', options={'xatol': 1e-2, 'disp': True, 'maxiter' : 10000})
   print(res.x)
   
 
 def main():
-  #todo: run default stuff
   config_path = sys.argv[1]
   with open(config_path, "r") as config_json:
     config = json.load(config_json)
   
-  # runModel(config, 1640341752 - 14 * 24 * 60 * 60, 1640341752, 10000)
-  optimizeModel(config, 1640341752 - 14 * 24 * 60 * 60, 1640341752, 10000)
+  runModel(config, 1640341752 - 14 * 24 * 60 * 60, 1640341752)
+  # optimizeModel(config, 1640341752 - 14 * 24 * 60 * 60, 1640341752)
 
 if __name__ == "__main__":
-  exit(main())
+  # res = cProfile.run('main()', sort='cumtime')
+  res = main()
+  exit(res)
