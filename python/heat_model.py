@@ -95,7 +95,7 @@ def runModel(config, t_begin, t_end):
 def optimizeModel(config, t_begin, t_end):
   params_0 = hm_model.defaultParameters()
   params_0 = np.append(params_0, hm_model.defaultInitialConditions())
-  modelOptFun = hm_model.getModelOptimizationFunction(config, t_begin, t_end)
+  modelOptFun = getModelOptimizationFunction(config, t_begin, t_end)
   res = minimize(modelOptFun, params_0, method='nelder-mead', options={'xatol': 1e-2, 'disp': True, 'maxiter' : 10000})
   print(res.x)
   
