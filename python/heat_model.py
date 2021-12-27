@@ -179,7 +179,7 @@ def parametersToStateMatrices(alfa, kappa, lambd, m, c):
 def make_ode_model(A, K, L, ub):
   last_dt = ub.index[-1]
   def model(t, x):
-    dt = pytz.utc.localize(datetime.fromtimestamp(t).replace(second=0, microsecond=0))
+    dt = datetime.fromtimestamp(t, tz=pytz.UTC).replace(second=0, microsecond=0)
     # print(dt)
     if dt > last_dt:
       dt = last_dt
