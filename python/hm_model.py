@@ -58,15 +58,53 @@ def defaultParameters():
   1.23281352e+05,  7.47283398e+04,  7.81661713e+04])
   return params
 
-def validateParameters(params):
+def saveParameters(filepath, params):
+  np.save(filepath, params)
 
-  # all parameters should be not less than 0
-  if (any(p < 0 for p in params)):
-    return False
-  
-  # todo: more will follow
+def readParameters(filepath):
+  return np.load(filepath)
 
-  return True
+def bounds():
+  bounds = [
+    (0.0001, 100),   # alfa12, alfa21
+    (0.0001, 100000),   # alfa13, alfa31
+    (0.0001, 100000),   # alfa14, alfa41
+    (0.0001, 10000),    # alfa15, alfa51
+    (0.0001, 10000),    # alfa16, alfa61
+    (0.0001, 100000),   # alfa23, alfa32
+    (0.0001, 100000),   # alfa24, alfa42
+    (0.0001, 10000),    # alfa26, alfa62
+    (0.0001, 1000),      # alfa34, alfa43
+    (0.0001, 1000),    # alfa45, alfa54
+    (0.0001, 1000),   # alfa46, alfa64
+    (0.0001, 10000),  # kappa11
+    (0.0001, 10),  # kappa12
+    (0.0001, 10), # kappa13
+    (0.0001, 1000),  # kappa21
+    (0.0001, 10), # kappa23
+    (0.0001, 10000),    # kappa41
+    (0.0001, 10000),    # kappa52
+    (0.0001, 10000),    # kappa63
+    (0.0001, 10),  # lambd31
+    (0.0001, 10),  # lambd32
+    (0.0001, 10),  # lambd41
+    (0.0001, 10),  # lambd42
+    (0.0001, 10),  # lambd53
+    (0.0001, 10),  # lambd64
+    (1, 1000), # m1
+    (1, 200),  # m2
+    (100, 30000),   # m3
+    (1000, 1000000),  # m4
+    (100, 100000),   # m5
+    (100, 100000),    # m6
+    (10, 25),    # x1
+    (10, 25),    # x2
+    (0, 30),    # x3
+    (0, 30),    # x4
+    (-10, 30),    # x5
+    (-10, 30)    # x6
+    ]
+  return bounds
 
 def matricesFromParameters(params):
   alfa12 = alfa21 = params[0]
