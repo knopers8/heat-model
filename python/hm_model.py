@@ -2,7 +2,10 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 import pytz
+from scipy.integrate import solve_ivp
+import matplotlib.pyplot as plt
 
+import hm_db
 
 def defaultParameters():
   params = np.array([
@@ -48,14 +51,14 @@ def defaultParameters():
     8.81426749e-02, 1.35836775e+02, 2.26374016e+01, 5.61996328e+03,
     8.23528772e+04, 6.99492202e+04, 6.80298435e+04])
     
-  params = np.array([1.82881518e-01,  1.08302091e+03,  1.17175597e+03,  3.62660814e+02,
-  2.07333721e+02,  7.60559542e+02,  2.00000000e+03,  1.99500241e+02,
-  7.20428841e+00,  5.81389611e+00,  4.58142881e+00,  2.11998189e+02,
-  1.32753235e-02,  1.24713940e-02,  1.71405188e+01,  1.99485938e-02,
-  1.14239060e+02,  4.78289530e+01,  1.50307247e+02,  1.81259718e-01,
-  1.82350575e-01,  1.41923416e-01,  6.49881680e-01,  6.96868028e-02,
-  1.08972196e-01,  1.35713609e+02,  2.45478646e+01,  7.16679533e+03,
-  1.23281352e+05,  7.47283398e+04,  7.81661713e+04])
+  params = np.array([2.01598404e-01, 1.34493388e+03, 1.97251579e+03, 3.98614790e+02,
+ 1.73951339e+02, 4.57706608e+02, 7.57193966e+01, 1.99140639e+02,
+ 5.33172015e+00, 7.50944177e+00, 8.54318818e+00, 3.27665011e+02,
+ 1.23844369e-02, 9.07104477e-03, 9.64776808e+00, 2.35990899e-02,
+ 2.49505961e+02, 1.03111176e+02, 4.02518900e+01, 1.30535166e-01,
+ 1.82427144e-01, 1.27492841e-01, 6.21972416e-01, 6.38328402e-02,
+ 2.75493898e-02, 1.43187395e+02, 2.54246117e+01, 4.68094399e+03,
+ 8.08070753e+04, 1.03388156e+05, 1.20973275e+05])
   return params
 
 def saveParameters(filepath, params):
@@ -181,11 +184,11 @@ def defaultInitialConditions():
     [19.3],
     [19],
     [19],
-    [14],
+    [15],
     [13]
     ])
   
-  # x_0 = np.array([[18.44693111], [17.63445569], [18.27838006], [18.23274769], [6.88350227], [6.54061254]])
+  # x_0 = np.array([[24.44165186], [12.59187175], [16.73906938], [22.85770545], [15.060221467], [13.44287631]])
   return x_0
 
 def parametersToStateMatrices(alfa, kappa, lambd, m, c):
@@ -209,17 +212,70 @@ def parametersToStateMatrices(alfa, kappa, lambd, m, c):
   return A, K, L
 
 
-def make_ode_model(A, K, L, ub):
-  last_dt = ub.index[-1]
-  def model(t, x):
-    dt = datetime.fromtimestamp(t, tz=pytz.UTC).replace(second=0, microsecond=0)
-    # print(dt)
-    if dt > last_dt:
-      dt = last_dt
-    current_ub = ub.loc[dt]
-    current_u = np.array([ current_ub[0:4] ]).T
-    current_b = np.array([ current_ub[4:8] ]).T
-    res = np.dot(A, x.T) + np.dot(K, current_u).T[0] + np.dot(L, current_b).T[0]
-    return res
+class Model:
+  def __init__(self, A, K, L):
+    self.A = A
+    self.K = K
+    self.L = L
+  
+  def fromOptParameters(p):
+    alfa, kappa, lambd, m, c = matricesFromParameters(p)
+    A, K, L = parametersToStateMatrices(alfa, kappa, lambd, m, c)
+    return Model(A, K, L)
+  
+  def makeCallback(self, ub):
+    last_dt = ub.index[-1]
+    def model(t, x):
+      dt = datetime.fromtimestamp(t, tz=pytz.UTC).replace(second=0, microsecond=0)
+      # print(dt)
+      if dt > last_dt:
+        dt = last_dt
+      current_ub = ub.loc[dt]
+      current_u = np.array([ current_ub[0:4] ]).T
+      current_b = np.array([ current_ub[4:8] ]).T
+      # import code
+      # code.interact(local=locals())
+      res = np.dot(self.A, x.T) + np.dot(self.K, current_u).T[0] + np.dot(self.L, current_b).T[0]
+      return res
 
-  return model
+    return model
+  
+  def run(self, t_space, x_0, ub):
+    x_00 = x_0.T # [0]
+    # Radau shows less fluctuations when system is stabilized
+    num_sol = solve_ivp(self.makeCallback(ub), [t_space[0], t_space[-1]], x_00, method='Radau', t_eval=t_space)
+    
+    return num_sol
+
+def prepareTime(t_begin, t_end):
+  # TODO support any step
+  t_begin = t_begin - (t_begin % 60)
+  t_end = t_end - (t_end % 60)
+  t_space = np.arange(t_begin, t_end, 60) # TODO parametrize step
+  dt_space = pd.DatetimeIndex([ datetime.fromtimestamp(t, tz=pytz.UTC) for t in t_space ], freq='60S')
+  return t_space, dt_space
+
+def visualizeRun(solution, references):
+  X_num_sol = solution.y
+  dt_space = solution.dt_space
+  x1_num_sol = pd.Series(X_num_sol[0].T, index=dt_space)
+  x2_num_sol = pd.Series(X_num_sol[1].T, index=dt_space)
+  x3_num_sol = pd.Series(X_num_sol[2].T, index=dt_space)
+  x4_num_sol = pd.Series(X_num_sol[3].T, index=dt_space)
+  x5_num_sol = pd.Series(X_num_sol[4].T, index=dt_space)
+  x6_num_sol = pd.Series(X_num_sol[5].T, index=dt_space)
+
+  plt.figure()
+  plt.plot(x1_num_sol, '-', linewidth=1, label='x1')
+  plt.plot(x2_num_sol, '-', linewidth=1, label='x2')
+  plt.plot(x3_num_sol, '-', linewidth=1, label='x3')
+  plt.plot(x4_num_sol, '-', linewidth=1, label='x4')
+  plt.plot(x5_num_sol, '-', linewidth=1, label='x5')
+  plt.plot(x6_num_sol, '-', linewidth=1, label='x6')
+  for ref in references:
+    plt.plot(ref, '-', linewidth=1, label=ref.name)
+
+  plt.xlabel('t')
+  plt.legend()
+  
+  plt.show()

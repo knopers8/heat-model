@@ -1,14 +1,12 @@
 from influxdb import InfluxDBClient
 import pandas as pd
 
-
 # TODO that should not be here, it calibration should be done by the user, not in retrieveing
 def defaultCoveredSensorLuxCalibration():
   return lambda m : 15000000.0 / ( 2550000.0 / m - 10000)
   
 def defaultUncoveredSensorLuxCalibration():
   return lambda m : 5000000.0 / ( 2550000.0 / m - 10000)
-
 
 def retrieveSeriesInfluxDB(db_config, table, field, t_begin_s, t_end_s, address):
   ### establish a connection to the database
