@@ -109,6 +109,14 @@ def bounds():
     ]
   return bounds
 
+def boundsMinMax():
+  min = []
+  max = []
+  for b in bounds():
+    min.append(b[0])
+    max.append(b[1])
+  return (min, max)
+
 def matricesFromParameters(params):
   alfa12 = alfa21 = params[0]
   alfa13 = alfa31 = params[1]
