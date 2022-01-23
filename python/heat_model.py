@@ -43,18 +43,35 @@ def optimizeModel(config, t_begin, t_end):
   params_0 = hm_model.defaultParameters()
   params_0 = np.append(params_0, hm_model.defaultInitialConditions())
   modelOptFun = hm_opt.getModelOptimizationFunction(config, t_begin, t_end)
-  res = minimize(modelOptFun, params_0, method='nelder-mead', options={'xatol': 1e+2, 'disp': True, 'maxiter' : 10000})
+  res = minimize(modelOptFun, params_0, method='nelder-mead', options={'fatol': 1.0, 'disp': True, 'maxiter' : 1000})
   # res = minimize(modelOptFun, params_0, method='trust-constr', bounds=hm_model.bounds())
-  # res = optimize.shgo(modelOptFun, hm_model.bounds())
+  # res = optimize.shgo(modelOptFun, hm_model.bounds())  
   print(res)
+
+def optimizeModelExpandingWindow(config, t_begin, t_end, steps):
+  params_0 = hm_model.defaultParameters()
+  params_0 = np.append(params_0, hm_model.defaultInitialConditions())
+  
+  t_span = t_end - t_begin
+  for step in range(1, steps + 1):
+    print('NEXT ITERATION: ' + str(step) + '/' + str(steps))
+    print('Current parameters')
+    print(params_0)
+    t_end_step = int(t_begin + t_span * (step / steps))
+    modelOptFun = hm_opt.getModelOptimizationFunction(config, t_begin, t_end_step)
+    res = minimize(modelOptFun, params_0, method='nelder-mead', options={'fatol': 1.0, 'disp': True, 'maxiter' : 250})
+    params_0 = res.x
+
+  print(params_0)
 
 def main():
   config_path = sys.argv[1]
   with open(config_path, "r") as config_json:
     config = json.load(config_json)
   
-  # runModel(config, 1642199356 - 35 * 24 * 60 * 60, 1642199356)
-  optimizeModel(config, 1642199356 - 35 * 24 * 60 * 60, 1642199356)
+  runModel(config, 1642199356 - 60 * 24 * 60 * 60, 1642199356)
+  # optimizeModel(config, 1642199356 - 35 * 24 * 60 * 60, 1642199356 - 30 * 24 * 60 * 60)
+  # optimizeModelExpandingWindow(config, 1642199356 - 60 * 24 * 60 * 60, 1642199356, 20)
 
 if __name__ == "__main__":
   # res = cProfile.run('main()', sort='cumtime')
