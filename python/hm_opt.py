@@ -7,7 +7,7 @@ from datetime import datetime
 import pytz
 
 def computeError(reference, results):
-  return sum(pow(reference - results, 2))
+  return (reference - results).pow(2).sum()
 
 def getModelOptimizationFunction(config, t_begin, t_end):
   
