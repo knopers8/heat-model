@@ -273,12 +273,12 @@ def prepareTime(t_begin, t_end):
 def visualizeRun(solution, references):
   X_num_sol = solution.y
   dt_space = solution.dt_space
-  x1_num_sol = pd.Series(X_num_sol[0].T, index=dt_space)
-  x2_num_sol = pd.Series(X_num_sol[1].T, index=dt_space)
-  x3_num_sol = pd.Series(X_num_sol[2].T, index=dt_space)
-  x4_num_sol = pd.Series(X_num_sol[3].T, index=dt_space)
-  x5_num_sol = pd.Series(X_num_sol[4].T, index=dt_space)
-  x6_num_sol = pd.Series(X_num_sol[5].T, index=dt_space)
+  x1_num_sol = pd.Series(X_num_sol[0].T, index=dt_space, name='x1')
+  x2_num_sol = pd.Series(X_num_sol[1].T, index=dt_space, name='x2')
+  x3_num_sol = pd.Series(X_num_sol[2].T, index=dt_space, name='x3')
+  x4_num_sol = pd.Series(X_num_sol[3].T, index=dt_space, name='x4')
+  x5_num_sol = pd.Series(X_num_sol[4].T, index=dt_space, name='x5')
+  x6_num_sol = pd.Series(X_num_sol[5].T, index=dt_space, name='x6')
 
   plt.figure()
   plt.plot(x1_num_sol, '-', linewidth=1, label='x1')

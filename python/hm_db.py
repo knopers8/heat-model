@@ -75,10 +75,39 @@ def retrieveKnownStates(db_config, t_start, t_end):
   x2.name = 'x2'
   return aggregateSeries(x1, x2, freq='60S')
 
-def storeInfluxDB():
-  # todo: general method to store in influxdb
-  print("todo")
+def storeInfluxDB(db_config, table, dataframe):
+  ### establish a connection to the database
+  client = InfluxDBClient(db_config['host'], db_config['port'], db_config['user'], db_config['password'], db_config['dbname'])
+  client.ping()
+  
+  measurements = []
+  
+  # TODO: find a way to do it without a loop
+  for t, row in dataframe.iterrows():
+    measurements.append({
+      "measurement" : table,
+      "tags": {},
+      "time": t.isoformat(),
+      "fields": { k:v for k,v in row.iteritems() }
+    })
+      
+  if len(measurements) > 0:
+    print("Writing " + str(len(measurements)) + " entries to the database...")
+    client.write_points(measurements)
+    print("...done!")
+  else:
+    print("No new entries to write, exiting.")
 
-def storeModelRun():
-  #todo: store a model run
-  print("todo")
+ 
+def storeModelRun(db_config, solution):
+  X_num_sol = solution.y
+  dt_space = solution.dt_space
+  x1_num_sol = pd.Series(X_num_sol[0].T, index=dt_space, name='x1')
+  x2_num_sol = pd.Series(X_num_sol[1].T, index=dt_space, name='x2')
+  x3_num_sol = pd.Series(X_num_sol[2].T, index=dt_space, name='x3')
+  x4_num_sol = pd.Series(X_num_sol[3].T, index=dt_space, name='x4')
+  x5_num_sol = pd.Series(X_num_sol[4].T, index=dt_space, name='x5')
+  x6_num_sol = pd.Series(X_num_sol[5].T, index=dt_space, name='x6')
+
+  df = aggregateSeries(x1_num_sol, x2_num_sol, x3_num_sol, x4_num_sol, x5_num_sol, x6_num_sol, freq='60S')
+  storeInfluxDB(db_config, 'model_solution', df)
