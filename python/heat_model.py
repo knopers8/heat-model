@@ -2,6 +2,7 @@ from scipy.optimize import minimize
 from scipy import optimize
 import numpy as np
 from datetime import datetime
+import pandas as pd
 import pytz
 import sys
 import json
@@ -13,18 +14,30 @@ import hm_model
 import hm_opt
 
 def runModel(config, t_begin, t_end):
-  model = hm_model.Model.fromOptParameters(hm_model.defaultParameters())
+  p = hm_model.defaultParameters()
+  
   x_0 = hm_model.defaultInitialConditions().T[0]
   t_space, dt_space = hm_model.prepareTime(t_begin, t_end)
   ub = hm_db.retrieveExternalConditions(config['influx-db-config'], t_begin, t_end)
-  # import code
-  # code.interact(local=locals())
-  solution = model.run(t_space, x_0, ub)
-  solution.dt_space = dt_space
-  # print('x1 error: ' + str(computeError(x12['x1'], x1_num_sol)))
-  # print('x2 error: ' + str(computeError(x12['x2'], x2_num_sol)))
   x12 = hm_db.retrieveKnownStates(config['influx-db-config'], t_begin, t_end)
-  hm_model.visualizeRun(solution, [x12['x1'], x12['x2']])
+
+  cont = True
+  while cont:
+    model = hm_model.Model.fromOptParameters(p)
+    solution = model.run(t_space, x_0, ub)
+    solution.dt_space = dt_space
+    
+    X_num_sol = solution.y
+    x1_num_sol = pd.Series(X_num_sol[0].T, index=dt_space)
+    x2_num_sol = pd.Series(X_num_sol[1].T, index=dt_space)
+    print('x1 error: ' + str(hm_opt.computeError(x12['x1'], x1_num_sol)))
+    print('x2 error: ' + str(hm_opt.computeError(x12['x2'], x2_num_sol)))
+    
+    hm_model.visualizeRun(solution, [x12['x1'], x12['x2']])
+    import code
+    code.interact(local=locals())
+  
+  return solution
 
 def optimizeModel(config, t_begin, t_end):
   params_0 = hm_model.defaultParameters()

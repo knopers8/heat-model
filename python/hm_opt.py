@@ -25,7 +25,7 @@ def getModelOptimizationFunction(config, t_begin, t_end):
   # import code
   # code.interact(local=locals())  
   def modelOptimizationFunction(params):
-    print('params: ' + str(params))
+    # print('params: ' + str(params))
     x_0 = params[31:]
 
     model = hm_model.Model.fromOptParameters(params[0:31])
@@ -36,7 +36,6 @@ def getModelOptimizationFunction(config, t_begin, t_end):
     x2_num_sol = pd.Series(X_num_sol[1].T, index=dt_space)
     
     error = computeError(x12['x1'], x1_num_sol) + computeError(x12['x2'], x2_num_sol)
-    # error = computeError(x1, x1_num_sol) + computeError(x2, x2_num_sol)
     print('error: ' + str(error))
     return error
     
