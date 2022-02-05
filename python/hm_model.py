@@ -39,26 +39,31 @@ def defaultParameters():
     3000,   # m3
     37000,  # m4
     5000,   # m5
-    5000    # m6
+    5000,   # m6
+    7740,   # kappa45
+    19      # u5
   ])
   
-  params = np.array([1.53090562e-01, 5.14782533e+03, 8.09896167e+03, 9.79355818e+02,
- 1.96839612e+02, 1.05006921e+03, 1.64801224e+03, 8.74731401e+02,
- 4.23826429e+00, 6.67436088e+00, 9.86492470e+00, 5.26253647e+02,
- 2.55225853e-02, 1.20014759e-02, 1.15730447e+02, 1.16948014e-02,
- 9.26389815e+02, 3.22787574e+02, 4.51367629e+02, 4.94086294e-01,
- 4.77193197e-01, 1.45240582e+00, 1.12531185e+00, 2.96636741e-01,
- 4.15999437e-01, 1.29899132e+02, 2.29396675e+01, 6.24865589e+03,
- 1.87582651e+05, 1.33942409e+05, 9.23768489e+04])
- 
+  params = np.array([1.33758942e-01, 6.30322266e+03, 1.81029269e+04, 5.07136835e+02,
+       1.31151021e+02, 5.99866959e+02, 8.75570457e+02, 2.81840221e+02,
+       4.88317737e+00, 9.24198862e+00, 1.30290635e+01, 5.41873097e+02,
+       3.03546410e-02, 1.98936687e-02, 6.02826058e+01, 1.41978776e-02,
+       5.72704642e+02, 3.17590268e+02, 5.30050155e+02, 8.26040957e-01,
+       6.60308750e-01, 1.03864460e+00, 6.98628044e-01, 3.02197692e-02,
+       3.32126315e-02, 1.60802667e+02, 2.45195741e+01, 1.34717976e+04,
+       2.47330026e+05, 1.29893382e+04, 5.88553559e+03, 8.64079175e+02,
+       1.98642488e+01])
+     
    
-  # params = np.array([1.5000e-01, 6.2500e+03, 8.3250e+03, 1.0000e+03, 2.0000e+02,
-       # 1.2500e+03, 2.0000e+03, 8.0000e+02, 4.0000e+00, 6.7000e+00,
-       # 7.9500e+00, 5.5000e+02, 2.5000e-02, 1.2500e-02, 1.5000e+02,
-       # 1.2500e-02, 8.0000e+02, 4.0000e+02, 4.0000e+02, 5.0000e-01,
-       # 5.0000e-01, 1.5000e+00, 1.5000e+00, 4.0000e-01, 4.0000e-01,
-       # 1.3323e+02, 2.6220e+01, 5.0000e+03, 1.0000e+05, 1.0000e+05,
-       # 1.0000e+05])
+  # params = np.array([1.53090562e-01, 5.14782533e+03, 8.09896167e+03, 5.25000000e+02,
+       # 2.62000000e+02, 1.05006921e+03, 1.64801224e+03, 8.74731401e+02,
+       # 4.23826429e+00, 6.67436088e+00, 9.86492470e+00, 5.26253647e+02,
+       # 2.55225853e-02, 1.20014759e-02, 1.15730447e+02, 1.16948014e-02,
+       # 2.72000000e+02, 5.25000000e+02, 5.25000000e+02, 2.08000000e-01,
+       # 2.08000000e-01, 7.08000000e-01, 6.96000000e-01, 4.10000000e-02,
+       # 4.10000000e-02, 1.29899132e+02, 2.29396675e+01, 6.24865589e+03,
+       # 3.70000000e+04, 5.00000000e+03, 5.00000000e+03, 2.00000000e+03,
+       # 1.90000000e+01])
   return params
 
 def saveParameters(filepath, params):
@@ -105,7 +110,9 @@ def bounds():
     (0, 30),    # x3
     (0, 30),    # x4
     (-10, 30),    # x5
-    (-10, 30)    # x6
+    (-10, 30),    # x6
+    (0.0001, 50000),# kappa45
+    (10, 25)      # u5
     ]
   return bounds
 
@@ -149,6 +156,8 @@ def matricesFromParameters(params):
   m4 = params[28]
   m5 = params[29]
   m6 = params[30]
+  kappa45 = params[31]
+  u5 = params[32]
 
   alfa = np.array([
     [0     , alfa12, alfa13, alfa14, alfa15,  alfa16],
@@ -160,12 +169,12 @@ def matricesFromParameters(params):
     ])
 
   kappa = np.array([
-    [kappa11, kappa12, kappa13,    0],
-    [kappa21,       0, kappa23,    0],
-    [      0,       0,       0,    1],
-    [kappa41,       0,       0,    0],
-    [      0, kappa52,       0,    0],
-    [      0,       0, kappa63,    0]
+    [kappa11, kappa12, kappa13,    0,       0],
+    [kappa21,       0, kappa23,    0,       0],
+    [      0,       0,       0,    1,       0],
+    [kappa41,       0,       0,    0, kappa45],
+    [      0, kappa52,       0,    0,       0],
+    [      0,       0, kappa63,    0,       0]
     ])
 
   lambd = np.array([
@@ -184,26 +193,26 @@ def matricesFromParameters(params):
   # so we avoid increasing degrees of freedom
   c = np.array([1000, 1000, 1500, 880, 880, 880])
 
-  return alfa, kappa, lambd, m, c
+  return alfa, kappa, lambd, m, c, u5
 
 def defaultInitialConditions():
   x_0 = np.array([
     [20.3],
     [19.3],
-    [19],
-    [20],
+    [19.6],
+    [19.5],
     [15],
-    [13.5]
+    [14.8]
     ])
     
   
-  x_0 = np.array([ 
-    [2.0570339e+01],
-    [1.90451733e+01],
-    [2.17531881e+01],
-    [2.18510327e+01],
-    [1.19070891e+01],
-    [9.75501882e+00]])
+  # x_0 = np.array([ 
+    # [2.0570339e+01],
+    # [1.90451733e+01],
+    # [2.17531881e+01],
+    # [2.18510327e+01],
+    # [1.89070891e+01],
+    # [1.75501882e+01]])
   return x_0
 
 def parametersToStateMatrices(alfa, kappa, lambd, m, c):
@@ -228,15 +237,16 @@ def parametersToStateMatrices(alfa, kappa, lambd, m, c):
 
 
 class Model:
-  def __init__(self, A, K, L):
+  def __init__(self, A, K, L, u5):
     self.A = A
     self.K = K
     self.L = L
+    self.u5 = u5
   
   def fromOptParameters(p):
-    alfa, kappa, lambd, m, c = matricesFromParameters(p)
+    alfa, kappa, lambd, m, c, u5 = matricesFromParameters(p)
     A, K, L = parametersToStateMatrices(alfa, kappa, lambd, m, c)
-    return Model(A, K, L)
+    return Model(A, K, L, u5)
   
   def makeCallback(self, ub):
     last_dt = ub.index[-1]
@@ -246,7 +256,8 @@ class Model:
       if dt > last_dt:
         dt = last_dt
       current_ub = ub.loc[dt]
-      current_u = np.array([ current_ub[0:4] ]).T
+      current_u = np.array([ current_ub[0:5] ]).T # we take one element more to make room for u5
+      current_u[4] = self.u5 
       current_b = np.array([ current_ub[4:8] ]).T
       # import code
       # code.interact(local=locals())

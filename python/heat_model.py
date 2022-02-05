@@ -69,9 +69,10 @@ def main():
   with open(config_path, "r") as config_json:
     config = json.load(config_json)
   
-  runModel(config, 1642199356 - 60 * 24 * 60 * 60, 1642199356)
-  # optimizeModel(config, 1642199356 - 35 * 24 * 60 * 60, 1642199356 - 30 * 24 * 60 * 60)
-  # optimizeModelExpandingWindow(config, 1642199356 - 60 * 24 * 60 * 60, 1642199356, 20)
+  # runModel(config, 1632780000, 1641855600)
+  runModel(config, 1642199356 - 45 * 24 * 60 * 60, 1642199356)
+  # optimizeModel(config, 1642199356 - 45 * 24 * 60 * 60, 1642199356)
+  # optimizeModelExpandingWindow(config, 1642199356 - 45 * 24 * 60 * 60, 1642199356, 10)
 
 if __name__ == "__main__":
   # res = cProfile.run('main()', sort='cumtime')
