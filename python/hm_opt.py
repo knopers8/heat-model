@@ -27,8 +27,9 @@ def getModelOptimizationFunction(config, t_begin, t_end):
   def modelOptimizationFunction(params):
     # print('params: ' + str(params))
     x_0 = params[33:]
+    p = dict(zip(hm_model.defaultParameters().keys(), params[0:33]))
 
-    model = hm_model.Model.fromOptParameters(params[0:33])
+    model = hm_model.Model.fromOptParameters(p)
 
     solution = model.run(t_space, x_0, ub)
     X_num_sol = solution.y

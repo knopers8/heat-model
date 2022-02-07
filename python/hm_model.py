@@ -4,56 +4,59 @@ from datetime import datetime
 import pytz
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
+import csv
 
 import hm_db
 
 def defaultParameters():
-  params = np.array([
-    0.15,   # alfa12, alfa21
-    6250,   # alfa13, alfa31
-    8325,   # alfa14, alfa41
-    525,    # alfa15, alfa51
-    262,    # alfa16, alfa61
-    1250,   # alfa23, alfa32
-    2000,   # alfa24, alfa42
-    188,    # alfa26, alfa62
-    4,      # alfa34, alfa43
-    6.7,    # alfa45, alfa54
-    7.95,   # alfa46, alfa64
-    102.5,  # kappa11
-    0.025,  # kappa12
-    0.0125, # kappa13
-    24.34,  # kappa21
-    0.0125, # kappa23
-    272,    # kappa41
-    525,    # kappa52
-    525,    # kappa63
-    0.208,  # lambd31
-    0.208,  # lambd32
-    0.708,  # lambd41
-    0.696,  # lambd42
-    0.041,  # lambd53
-    0.041,  # lambd64
-    133.23, # m1
-    26.22,  # m2
-    3000,   # m3
-    37000,  # m4
-    5000,   # m5
-    5000,   # m6
-    7740,   # kappa45
-    19      # u5
-  ])
+
+  params = {
+    'alfa12' : 0.15,
+    'alfa13' : 6250,
+    'alfa14' : 8325,
+    'alfa15' : 525,
+    'alfa16' : 262,
+    'alfa23' : 1250,
+    'alfa24' : 2000,
+    'alfa26' : 188,
+    'alfa34' : 4,
+    'alfa45' : 6.7,
+    'alfa46' : 7.95,
+    'kappa11' : 102.5,
+    'kappa12' : 0.025,
+    'kappa13' : 0.0125,
+    'kappa21' : 24.34,
+    'kappa23' : 0.0125,
+    'kappa41' : 272,
+    'kappa52' : 525,
+    'kappa63' : 525,
+    'lambd31' : 0.208,
+    'lambd32' : 0.208,
+    'lambd41' : 0.708,
+    'lambd42' : 0.696,
+    'lambd53' : 0.041,
+    'lambd64' : 0.041,
+    'm1' : 133.23,
+    'm2' : 26.22,
+    'm3' : 3000,
+    'm4' : 37000,
+    'm5' : 5000,
+    'm6' : 5000,
+    'kappa45' : 7740,
+    'u5' : 19
+  }
   
-  params = np.array([1.33758942e-01, 6.30322266e+03, 1.81029269e+04, 5.07136835e+02,
-       1.31151021e+02, 5.99866959e+02, 8.75570457e+02, 2.81840221e+02,
-       4.88317737e+00, 9.24198862e+00, 1.30290635e+01, 5.41873097e+02,
-       3.03546410e-02, 1.98936687e-02, 6.02826058e+01, 1.41978776e-02,
-       5.72704642e+02, 3.17590268e+02, 5.30050155e+02, 8.26040957e-01,
-       6.60308750e-01, 1.03864460e+00, 6.98628044e-01, 3.02197692e-02,
-       3.32126315e-02, 1.60802667e+02, 2.45195741e+01, 1.34717976e+04,
-       2.47330026e+05, 1.29893382e+04, 5.88553559e+03, 8.64079175e+02,
-       1.98642488e+01])
-     
+  params = {'alfa12': 0.133758942, 'alfa13': 6303.22266, 'alfa14': 18102.9269,
+    'alfa15': 507.136835, 'alfa16': 131.151021, 'alfa23': 599.866959, 'alfa24': 875.570457,
+    'alfa26': 281.840221, 'alfa34': 4.88317737, 'alfa45': 9.24198862, 'alfa46': 13.0290635,
+    'kappa11': 541.873097, 'kappa12': 0.030354641, 'kappa13': 0.0198936687,
+    'kappa21': 60.2826058, 'kappa23': 0.0141978776, 'kappa41': 572.704642,
+    'kappa52': 317.590268, 'kappa63': 530.050155, 'lambd31': 0.826040957,
+    'lambd32': 0.66030875, 'lambd41': 1.0386446, 'lambd42': 0.698628044,
+    'lambd53': 0.0302197692, 'lambd64': 0.0332126315, 'm1': 160.802667,
+    'm2': 24.5195741, 'm3': 13471.7976, 'm4': 247330.026, 'm5': 12989.3382,
+    'm6': 5885.53559, 'kappa45': 864.079175, 'u5': 19.8642488
+    }
    
   # params = np.array([1.53090562e-01, 5.14782533e+03, 8.09896167e+03, 5.25000000e+02,
        # 2.62000000e+02, 1.05006921e+03, 1.64801224e+03, 8.74731401e+02,
@@ -67,7 +70,11 @@ def defaultParameters():
   return params
 
 def saveParameters(filepath, params):
-  np.save(filepath, params)
+  csvfile = open(filepath, 'w')
+  writer = csv.DictWriter(csvfile, fieldnames = params.keys())
+  writer.writeheader()
+  writer.writerows([params])
+  csvfile.close()
 
 def readParameters(filepath):
   return np.load(filepath)
@@ -125,39 +132,39 @@ def boundsMinMax():
   return (min, max)
 
 def matricesFromParameters(params):
-  alfa12 = alfa21 = params[0]
-  alfa13 = alfa31 = params[1]
-  alfa14 = alfa41 = params[2]
-  alfa15 = alfa51 = params[3]
-  alfa16 = alfa61 = params[4]
-  alfa23 = alfa32 = params[5]
-  alfa24 = alfa42 = params[6]
-  alfa26 = alfa62 = params[7]
-  alfa34 = alfa43 = params[8]
-  alfa45 = alfa54 = params[9]
-  alfa46 = alfa64 = params[10]
-  kappa11 = params[11]
-  kappa12 = params[12]
-  kappa13 = params[13]
-  kappa21 = params[14]
-  kappa23 = params[15]
-  kappa41 = params[16]
-  kappa52 = params[17]
-  kappa63 = params[18]
-  lambd31 = params[19]
-  lambd32 = params[20]
-  lambd41 = params[21]
-  lambd42 = params[22]
-  lambd53 = params[23]
-  lambd64 = params[24]
-  m1 = params[25]
-  m2 = params[26]
-  m3 = params[27]
-  m4 = params[28]
-  m5 = params[29]
-  m6 = params[30]
-  kappa45 = params[31]
-  u5 = params[32]
+  alfa12 = alfa21 = params['alfa12']
+  alfa13 = alfa31 = params['alfa13']
+  alfa14 = alfa41 = params['alfa14']
+  alfa15 = alfa51 = params['alfa15']
+  alfa16 = alfa61 = params['alfa16']
+  alfa23 = alfa32 = params['alfa23']
+  alfa24 = alfa42 = params['alfa24']
+  alfa26 = alfa62 = params['alfa26']
+  alfa34 = alfa43 = params['alfa34']
+  alfa45 = alfa54 = params['alfa45']
+  alfa46 = alfa64 = params['alfa46']
+  kappa11 = params['kappa11']
+  kappa12 = params['kappa12']
+  kappa13 = params['kappa13']
+  kappa21 = params['kappa21']
+  kappa23 = params['kappa23']
+  kappa41 = params['kappa41']
+  kappa52 = params['kappa52']
+  kappa63 = params['kappa63']
+  lambd31 = params['lambd31']
+  lambd32 = params['lambd32']
+  lambd41 = params['lambd41']
+  lambd42 = params['lambd42']
+  lambd53 = params['lambd53']
+  lambd64 = params['lambd64']
+  m1 = params['m1']
+  m2 = params['m2']
+  m3 = params['m3']
+  m4 = params['m4']
+  m5 = params['m5']
+  m6 = params['m6']
+  kappa45 = params['kappa45']
+  u5 = params['u5']
 
   alfa = np.array([
     [0     , alfa12, alfa13, alfa14, alfa15,  alfa16],

@@ -93,7 +93,7 @@ def storeInfluxDB(db_config, table, dataframe):
       
   if len(measurements) > 0:
     print("Writing " + str(len(measurements)) + " entries to the database...")
-    client.write_points(measurements)
+    client.write_points(measurements, batch_size=1000)
     print("...done!")
   else:
     print("No new entries to write, exiting.")
